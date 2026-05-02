@@ -2,11 +2,16 @@
 title SplitPay Server
 echo.
 echo  ==========================================
-echo   SplitPay - Starting Local Server...
+echo   SplitPay - Starting...
 echo  ==========================================
 echo.
-echo  Once started, open your browser and go to:
-echo  http://localhost:5000
+
+echo  [1/2] Starting MongoDB...
+net start MongoDB
+echo.
+
+echo  [2/2] Starting SplitPay server...
+echo  Open your browser and go to: http://localhost:5000
+echo  Press Ctrl+C in this window to STOP the server.
 echo.
 npm start
-pause
