@@ -9,6 +9,8 @@ const API = '/api';
 let currentSession   = null; // full session object from server
 let currentMemberId  = null; // _id of the logged-in member (member flow)
 let refreshInterval  = null; // polling interval for organizer view
+let statusInterval   = null; // polling interval for status view
+let statusSessionId  = null; // session ID being watched in status view
 
 /* ════════════════════════════════════════════════════════════════════════════
    UTILITY HELPERS
@@ -65,11 +67,13 @@ const fmt = (n) => `₹${parseFloat(n).toLocaleString('en-IN', { minimumFraction
 
 document.getElementById('btn-organizer').addEventListener('click', () => showView('view-organizer'));
 document.getElementById('btn-member').addEventListener('click', () => showView('view-member'));
+document.getElementById('btn-status').addEventListener('click', () => showView('view-status'));
 
 // Back buttons
 document.querySelectorAll('.back-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     clearInterval(refreshInterval);
+    clearInterval(statusInterval);
     showView(btn.dataset.target || 'view-home');
   });
 });
@@ -317,6 +321,115 @@ document.getElementById('form-payment').addEventListener('submit', async (e) => 
     showError('payment-error', err.message);
   } finally {
     setLoading(submitBtn, false);
+  }
+});
+
+/* ════════════════════════════════════════════════════════════════════════════
+   CHECK STATUS FLOW
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Form submit ──────────────────────────────────────────────────────────── */
+document.getElementById('form-check-status').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearError('status-error');
+
+  const id = document.getElementById('checkSessionId').value.trim().toUpperCase();
+  if (!id) return showError('status-error', 'Please enter a Session ID.');
+
+  const submitBtn = document.getElementById('btn-status-submit');
+  setLoading(submitBtn, true);
+
+  try {
+    const data = await fetchStatusById(id);
+    statusSessionId = id;
+
+    renderStatusDashboard(data);
+    document.getElementById('status-result').classList.remove('hidden');
+    document.getElementById('status-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Auto-refresh every 10 s
+    clearInterval(statusInterval);
+    statusInterval = setInterval(async () => {
+      const fresh = await fetchStatusById(statusSessionId);
+      if (fresh) renderStatusDashboard(fresh);
+    }, 10000);
+
+  } catch (err) {
+    showError('status-error', err.message);
+  } finally {
+    setLoading(submitBtn, false);
+  }
+});
+
+/* ── Fetch session by ID ──────────────────────────────────────────────────── */
+async function fetchStatusById(id) {
+  const res  = await fetch(`${API}/session/${id}`);
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || 'Session not found.');
+  return data.data;
+}
+
+/* ── Render status dashboard ──────────────────────────────────────────────── */
+function renderStatusDashboard(session) {
+  const paidMembers = session.members.filter(m => m.status === 'Paid');
+  const totalCount  = session.members.length;
+  const paidCount   = paidMembers.length;
+  const collected   = paidMembers.reduce((s, m) => s + m.amount, 0);
+  const remaining   = session.totalAmount - collected;
+  const pct         = totalCount > 0 ? Math.round((paidCount / session.numMembers) * 100) : 0;
+
+  // Header
+  document.getElementById('status-display-id').textContent = session.sessionId;
+  document.getElementById('status-created-at').textContent =
+    'Created ' + new Date(session.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+
+  // Progress bar
+  document.getElementById('status-progress-label').textContent = `${paidCount} of ${session.numMembers} paid`;
+  document.getElementById('status-progress-pct').textContent   = `${pct}%`;
+  document.getElementById('status-progress-bar').style.width   = `${pct}%`;
+
+  // Stats
+  document.getElementById('status-stat-total').textContent     = fmt(session.totalAmount);
+  document.getElementById('status-stat-per').textContent       = fmt(session.amountPerMember);
+  document.getElementById('status-stat-collected').textContent = fmt(collected);
+  document.getElementById('status-stat-remaining').textContent = fmt(remaining);
+
+  // Members list
+  const list = document.getElementById('status-members-list');
+  if (!session.members || session.members.length === 0) {
+    list.innerHTML = '<p class="empty-state">No members have joined yet.</p>';
+    return;
+  }
+
+  // Sort: Paid first, then Pending
+  const sorted = [...session.members].sort((a, b) => {
+    if (a.status === b.status) return a.name.localeCompare(b.name);
+    return a.status === 'Paid' ? -1 : 1;
+  });
+
+  list.innerHTML = sorted.map(m => `
+    <div class="member-item">
+      <div class="member-info">
+        <span class="member-name">${escapeHtml(m.name)}</span>
+        ${m.transactionId ? `<span class="member-txn">TXN: ${escapeHtml(m.transactionId)}</span>` : ''}
+      </div>
+      <div class="member-right">
+        <span class="member-amount">${fmt(m.amount)}</span>
+        <span class="status-badge ${m.status === 'Paid' ? 'status-paid' : 'status-pending'}">${m.status}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ── Manual refresh button ────────────────────────────────────────────────── */
+document.getElementById('btn-status-refresh').addEventListener('click', async () => {
+  if (!statusSessionId) return;
+  try {
+    const data = await fetchStatusById(statusSessionId);
+    renderStatusDashboard(data);
+    showToast('✅ Status refreshed');
+  } catch (err) {
+    showToast('❌ ' + err.message);
   }
 });
 

@@ -46,6 +46,13 @@
           <p>Enter your name and a Session ID shared by the organizer to view and pay your share.</p>
           <span class="role-cta">Pay Now →</span>
         </button>
+
+        <button id="btn-status" class="role-card status-card" aria-label="Check status of any payment session">
+          <div class="role-icon">📊</div>
+          <h2>Check Status</h2>
+          <p>Enter any Session ID to instantly see who has paid, who hasn't, and how much is left.</p>
+          <span class="role-cta">View Status →</span>
+        </button>
       </div>
     </section>
 
@@ -193,6 +200,88 @@
               <p id="success-txn-id" class="txn-id-display"></p>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ VIEW 4: Check Session Status ════════════════════════════ -->
+    <section id="view-status" class="view">
+      <div class="view-header">
+        <button class="back-btn" data-target="view-home" aria-label="Go back to home">← Back</button>
+        <h2 class="view-title">Check Session Status</h2>
+      </div>
+
+      <div class="card">
+        <form id="form-check-status" novalidate>
+          <div class="form-group">
+            <label for="checkSessionId">Session ID</label>
+            <input type="text" id="checkSessionId" name="checkSessionId" placeholder="e.g. A3FX9KQ2" maxlength="8" required />
+          </div>
+          <div id="status-error" class="error-msg hidden"></div>
+          <button type="submit" id="btn-status-submit" class="btn-primary btn-purple">
+            <span class="btn-text">🔍 Check Status</span>
+            <span class="btn-loader hidden"></span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Status dashboard (shown after lookup) -->
+      <div id="status-result" class="hidden">
+        <div class="card result-card">
+
+          <!-- Session ID + timestamp -->
+          <div class="status-header">
+            <div class="status-session-id">
+              <span class="label">Session</span>
+              <span id="status-display-id" class="session-id-value" style="font-size:20px;letter-spacing:4px;"></span>
+            </div>
+            <div class="status-meta">
+              <span id="status-created-at" class="meta-text"></span>
+              <button id="btn-status-refresh" class="icon-refresh-btn" title="Refresh">🔄</button>
+            </div>
+          </div>
+
+          <!-- Progress bar -->
+          <div class="progress-section">
+            <div class="progress-labels">
+              <span id="status-progress-label" class="progress-label-left">0 of 0 paid</span>
+              <span id="status-progress-pct" class="progress-label-right">0%</span>
+            </div>
+            <div class="progress-track">
+              <div id="status-progress-bar" class="progress-fill" style="width:0%"></div>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="stats-row">
+            <div class="stat-box">
+              <span class="stat-label">Total</span>
+              <span id="status-stat-total" class="stat-value">₹0</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Per Member</span>
+              <span id="status-stat-per" class="stat-value">₹0</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Collected</span>
+              <span id="status-stat-collected" class="stat-value green">₹0</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Remaining</span>
+              <span id="status-stat-remaining" class="stat-value red">₹0</span>
+            </div>
+          </div>
+
+          <!-- Member list -->
+          <div class="members-section">
+            <h3 class="section-title">Members</h3>
+            <div id="status-members-list" class="members-list">
+              <p class="empty-state">No members have joined yet.</p>
+            </div>
+          </div>
+
+          <!-- Auto-refresh indicator -->
+          <p class="auto-refresh-hint">🔁 Auto-refreshes every 10 seconds</p>
         </div>
       </div>
     </section>
