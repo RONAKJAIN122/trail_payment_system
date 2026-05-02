@@ -71,11 +71,6 @@ sessionSchema.virtual('totalCollected').get(function () {
     .reduce((sum, m) => sum + m.amount, 0);
 });
 
-// Virtual: remaining
-sessionSchema.virtual('remaining').get(function () {
-  return this.totalAmount - this.totalCollected;
-});
-
 sessionSchema.set('toJSON', { virtuals: true });
 sessionSchema.set('toObject', { virtuals: true });
 
