@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SplitPay – Group Payment Tracker</title>
+  <meta name="description" content="Split trip expenses effortlessly with SplitPay. Create a payment session, share the ID, and track who has paid in real time." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Top Nav ─────────────────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="brand-icon">✦</span>
+      <span class="brand-name">SplitPay</span>
+    </div>
+    <span class="nav-tagline">Trip expenses, split instantly</span>
+  </nav>
+
+  <!-- ── Main App ────────────────────────────────────────────────────── -->
+  <main class="app-container">
+
+    <!-- ══ VIEW 1: Home ══════════════════════════════════════════════ -->
+    <section id="view-home" class="view active">
+      <div class="hero">
+        <div class="hero-badge">✦ No more awkward IOUs</div>
+        <h1 class="hero-title">Split Any Bill,<br /><span class="gradient-text">Instantly.</span></h1>
+        <p class="hero-sub">Create a session, share a code, and track payments from your entire group in real time.</p>
+      </div>
+
+      <div class="home-cards">
+        <button id="btn-organizer" class="role-card organizer-card" aria-label="Create a new payment session as organizer">
+          <div class="role-icon">🧾</div>
+          <h2>Create Session</h2>
+          <p>Set up a group payment, upload your UPI QR and share the session ID with everyone.</p>
+          <span class="role-cta">Get Started →</span>
+        </button>
+
+        <button id="btn-member" class="role-card member-card" aria-label="Join an existing payment session as member">
+          <div class="role-icon">💸</div>
+          <h2>Join Session</h2>
+          <p>Enter your name and a Session ID shared by the organizer to view and pay your share.</p>
+          <span class="role-cta">Pay Now →</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ══ VIEW 2: Organizer – Create Session ════════════════════════ -->
+    <section id="view-organizer" class="view">
+      <div class="view-header">
+        <button class="back-btn" data-target="view-home" aria-label="Go back to home">← Back</button>
+        <h2 class="view-title">Create Payment Session</h2>
+      </div>
+
+      <div class="card">
+        <form id="form-create-session" novalidate>
+          <div class="form-group">
+            <label for="totalAmount">Total Amount (₹)</label>
+            <input type="number" id="totalAmount" name="totalAmount" placeholder="e.g. 2400" min="1" required />
+          </div>
+          <div class="form-group">
+            <label for="numMembers">Number of Members</label>
+            <input type="number" id="numMembers" name="numMembers" placeholder="e.g. 4" min="1" max="100" required />
+          </div>
+          <div class="form-group">
+            <label for="qrCode">Upload UPI QR Code</label>
+            <div class="file-drop-zone" id="qrDropZone">
+              <input type="file" id="qrCode" name="qrCode" accept="image/*" required />
+              <div class="drop-inner">
+                <span class="drop-icon">📷</span>
+                <span class="drop-text">Click or drag QR image here</span>
+                <span class="drop-hint">PNG, JPG, WEBP up to 5 MB</span>
+              </div>
+              <img id="qrPreviewSmall" class="qr-preview-small hidden" alt="QR Preview" />
+            </div>
+          </div>
+          <div id="create-error" class="error-msg hidden"></div>
+          <button type="submit" id="btn-create-submit" class="btn-primary">
+            <span class="btn-text">Create Session</span>
+            <span class="btn-loader hidden"></span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Result panel (shown after creation) -->
+      <div id="organizer-result" class="hidden">
+        <div class="card result-card">
+          <div class="session-id-display">
+            <span class="label">Your Session ID</span>
+            <div class="session-id-box">
+              <span id="display-session-id" class="session-id-value"></span>
+              <button id="btn-copy-id" class="copy-btn" title="Copy Session ID">📋</button>
+            </div>
+            <p class="share-hint">Share this ID with your group members</p>
+          </div>
+
+          <div class="qr-section">
+            <img id="qrImagePreview" class="qr-image" alt="UPI QR Code" />
+            <p class="qr-label">Scan to Pay</p>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-box">
+              <span class="stat-label">Total Amount</span>
+              <span id="stat-total" class="stat-value">₹0</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Per Member</span>
+              <span id="stat-per" class="stat-value">₹0</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Collected</span>
+              <span id="stat-collected" class="stat-value green">₹0</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Remaining</span>
+              <span id="stat-remaining" class="stat-value red">₹0</span>
+            </div>
+          </div>
+
+          <button id="btn-refresh" class="btn-secondary">🔄 Refresh Member Status</button>
+
+          <div class="members-section">
+            <h3 class="section-title">Members</h3>
+            <div id="members-list" class="members-list">
+              <p class="empty-state">No members have joined yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ VIEW 3: Member – Join Session ════════════════════════════ -->
+    <section id="view-member" class="view">
+      <div class="view-header">
+        <button class="back-btn" data-target="view-home" aria-label="Go back to home">← Back</button>
+        <h2 class="view-title">Join a Session</h2>
+      </div>
+
+      <div class="card">
+        <form id="form-join-session" novalidate>
+          <div class="form-group">
+            <label for="memberName">Your Name</label>
+            <input type="text" id="memberName" name="memberName" placeholder="e.g. Ronak" required />
+          </div>
+          <div class="form-group">
+            <label for="joinSessionId">Session ID</label>
+            <input type="text" id="joinSessionId" name="joinSessionId" placeholder="e.g. A3FX9KQ2" maxlength="8" required />
+          </div>
+          <div id="join-error" class="error-msg hidden"></div>
+          <button type="submit" id="btn-join-submit" class="btn-primary">
+            <span class="btn-text">Join Session</span>
+            <span class="btn-loader hidden"></span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Member payment panel -->
+      <div id="member-result" class="hidden">
+        <div class="card result-card">
+          <div class="payment-hero">
+            <span class="payment-label">Your share to pay</span>
+            <span id="member-amount" class="payment-amount">₹0</span>
+          </div>
+
+          <div class="qr-section">
+            <img id="member-qr-image" class="qr-image" alt="UPI QR Code" />
+            <p class="qr-label">Scan & Pay via UPI</p>
+          </div>
+
+          <div id="payment-form-wrap">
+            <form id="form-payment" novalidate>
+              <div class="form-group">
+                <label for="transactionId">Transaction / UTR ID</label>
+                <input type="text" id="transactionId" name="transactionId" placeholder="Enter your UPI transaction ID" required />
+              </div>
+              <div id="payment-error" class="error-msg hidden"></div>
+              <button type="submit" id="btn-pay-submit" class="btn-primary btn-green">
+                <span class="btn-text">✓ Confirm Payment</span>
+                <span class="btn-loader hidden"></span>
+              </button>
+            </form>
+          </div>
+
+          <div id="payment-success-banner" class="hidden success-banner">
+            <span class="success-icon">✅</span>
+            <div>
+              <strong>Payment Confirmed!</strong>
+              <p id="success-txn-id" class="txn-id-display"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Toast Notification ──────────────────────────────────────────── -->
+  <div id="toast" class="toast hidden" role="alert" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

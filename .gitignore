@@ -1,0 +1,7 @@
+node_modules/
+.env
+server/uploads/*.jpg
+server/uploads/*.jpeg
+server/uploads/*.png
+server/uploads/*.webp
+server/uploads/*.gif
